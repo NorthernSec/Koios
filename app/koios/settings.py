@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 
 from koios.functions import get_projects
+from koios.config    import Config
+conf = Config()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,12 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1$f2#dfg&v)q^3wgc@ir(1*7hxo_3ej+va-nyak(mfde=!^2&o'
+SECRET_KEY = conf.secret_key
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = conf.allowed_hosts
 
 
 # Application definition
@@ -79,8 +81,12 @@ WSGI_APPLICATION = 'koios.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE':   conf.database_engine,
+        'NAME':     conf.database_name,
+        'USER':     conf.database_user,
+        'PASSWORD': conf.database_password,
+        'HOST':     conf.database_host,
+        'PORT':     conf.database_port
     }
 }
 
@@ -127,3 +133,7 @@ STATICFILES_DIRS = [ BASE_DIR / "static_files" ] # project-wide static files
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Media Storage
+MEDIA_URL = '/media/'         # URL prefix for serving files
+MEDIA_ROOT = conf.media_path  # absolute path on disk

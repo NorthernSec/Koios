@@ -1,5 +1,76 @@
-_DEFAULTS = {
-    'secret_key':    None,
-    'allowed_hosts': [],
+import os
+import secrets
 
+from pathlib import Path
+
+_SECRET_KEY_PATH = "/etc/koios/secret_key"
+_DEFAULTS = {
+    'secret_key':    ("KOIOS_SECRET_KEY",    None),
+    'allowed_hosts': ("KOIOS_ALLOWED_HOSTS", []),
+    'media_path':    ("KOIOS_MEDIA_PATH",    'media'),
+    'database': { 'engine':   ("KOIOS_DB_ENGINE", 'django.db.backends.postgresql'),
+                  'name':     ("KOIOS_DB_NAME",   'koios'),
+                  'user':     ("KOIOS_DB_USER",   'koios'),
+                  'password': ("KOIOS_DB_PASS",   'change_me'),
+                  'host':     ("KOIOS_DB_HOST",   'koios_database'),
+                  'port':     ("KOIOS_DB_PORT",   '5432')}
 }
+
+class Config():
+    def _get_property(self, env, default):
+        if os.environ.get(env):
+            return os.environ.get(env)
+        return default
+
+    @property
+    def secret_key(self):
+        env = self._get_property(*_DEFAULTS['secret_key'])
+        if env:
+            return env
+        if not os.path.exists(_SECRET_KEY_PATH):
+            folder = os.path.dirname(_SECRET_KEY_PATH)
+            Path(folder).mkdir(parents=True, exist_ok=True)
+            key = secrets.token_urlsafe(64)
+            open(_SECRET_KEY_PATH, 'w').write(key)
+            return key
+        else:
+            return open(_SECRET_KEY_PATH).read().strip()
+
+    @property
+    def allowed_hosts(self):
+        hosts = self._get_property(*_DEFAULTS['allowed_hosts'])
+        if isinstance(hosts, str):
+            hosts = hosts.split(',')
+        return hosts
+
+    @property
+    def media_path(self):
+        path = self._get_property(*_DEFAULTS['media_path'])
+        if not path.startswith("/"): # relative path:
+            base = BASE_DIR = Path(__file__).resolve().parent.parent
+            return base / path
+        return path
+
+    @property
+    def database_engine(self):
+        return self._get_property(*_DEFAULTS['database']['engine'])
+
+    @property
+    def database_name(self):
+        return self._get_property(*_DEFAULTS['database']['name'])
+
+    @property
+    def database_user(self):
+        return self._get_property(*_DEFAULTS['database']['user'])
+
+    @property
+    def database_password(self):
+        return self._get_property(*_DEFAULTS['database']['password'])
+
+    @property
+    def database_host(self):
+        return self._get_property(*_DEFAULTS['database']['host'])
+
+    @property
+    def database_port(self):
+        return self._get_property(*_DEFAULTS['database']['port'])
