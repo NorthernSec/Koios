@@ -22,7 +22,7 @@ from django.urls.conf import include, re_path
 from tastypie.api     import Api
 
 from koios.functions  import get_projects
-from koios.classes    import AuthenticatedResource
+from koios.classes    import AuthenticatedResource, AuthenticatedModelResource
 
 # Base URL's
 urlpatterns = [
@@ -31,7 +31,10 @@ urlpatterns = [
 
 # Load project URLs - Views
 for project in get_projects():
-    urlpatterns.append( path(project+"/", include(project+".urls")) )
+    try:
+        urlpatterns.append( path(project+"/", include(project+".urls")) )
+    except:
+        print("No URLs found for "+project)
 
 # Load project URLs - API
 # v1 API
@@ -46,7 +49,8 @@ for app in settings.INSTALLED_APPS:
     for attr_name in dir(api_module):
         attr = getattr(api_module, attr_name)
         if (isinstance(attr, type)
-            and issubclass(attr, AuthenticatedResource)
-            and attr is not AuthenticatedResource):
+            and issubclass(attr, (AuthenticatedResource, AuthenticatedModelResource))
+            and attr is not AuthenticatedResource
+            and attr is not AuthenticatedModelResource):
             v1_api.register(attr())
 urlpatterns.append( re_path(r"^api/", include(v1_api.urls)) )
