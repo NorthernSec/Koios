@@ -1,6 +1,14 @@
-from tastypie.resources      import ModelResource
+from tastypie.resources      import Resource, ModelResource
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization  import DjangoAuthorization
+
+
+class Singleton(type):
+  _instances = {}
+  def __call__(cls, *args, **kwargs):
+    if cls not in cls._instances:
+      cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+    return cls._instances[cls]
 
 
 class ModelLevelAuthorization(DjangoAuthorization):
@@ -13,6 +21,8 @@ class ModelLevelAuthorization(DjangoAuthorization):
         return object_list.none()
 
     def read_detail(self, object_list, bundle):
+        if bundle.obj is None:
+            return object_list
         return self.read_list(object_list, bundle).filter(pk=bundle.obj.pk)
 
     def create_list(self, object_list, bundle):
@@ -47,8 +57,7 @@ class ModelLevelAuthorization(DjangoAuthorization):
         return self.delete_list(object_list, bundle).filter(pk=bundle.obj.pk)
 
 
-
-class AuthenticatedResource(ModelResource):
+class AuthenticatedModelResource(ModelResource):
     class Meta:
         authentication       = ApiKeyAuthentication()
         authorization        = ModelLevelAuthorization()
@@ -80,3 +89,22 @@ class AuthenticatedResource(ModelResource):
             bundle.data[name] = getattr(bundle.obj, name)
         bundle.data['resource_uri'] = self.get_resource_uri(bundle)
         return bundle
+
+    def is_authenticated(self, request, **kwargs):
+        if request.path.rstrip('/').endswith('/schema'):
+            return True
+        return super().is_authenticated(request, **kwargs)
+
+
+    def authorized_read_detail(self, object_list, bundle):
+        if bundle.obj is None:
+            return object_list
+        return super().authorized_read_detail(object_list, bundle)
+
+
+class AuthenticatedResource(Resource):
+    """Base for non-model Tastypie resources that still require authentication."""
+    class Meta:
+        authentication = ApiKeyAuthentication()
+        authorization  = ModelLevelAuthorization()
+        abstract       = True
