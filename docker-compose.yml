@@ -1,0 +1,24 @@
+services:
+  app:
+    container_name: koios_app
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./app/:/usr/src/app/
+      - ./docker/admin-creator.py:/usr/src/entrypoint/admin-creator.py:ro
+      - ./docker/docker-entrypoint.sh:/usr/src/entrypoint/docker-entrypoint.sh:ro
+    ports:
+      - 8001:8000
+    env_file:
+      - ./.env
+
+  db:
+    container_name: koios_database
+    image: pgvector/pgvector:pg17-trixie
+    volumes:
+      - /tmp/koios/data/db/:/var/lib/postgresql/data/
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    env_file:
+      - ./.env
