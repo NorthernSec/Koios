@@ -10,9 +10,10 @@ class Singleton(type):
       cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
     return cls._instances[cls]
 
-
 class ModelLevelAuthorization(DjangoAuthorization):
     def read_list(self, object_list, bundle):
+        if bundle.request.path.rstrip('/').endswith('/schema'):
+            return object_list  # Allows access
         # Allow all objects if the user has model-level view permission
         if bundle.request.user.has_perm(
             f"{object_list.model._meta.app_label}.view_{object_list.model._meta.model_name}"
@@ -21,6 +22,8 @@ class ModelLevelAuthorization(DjangoAuthorization):
         return object_list.none()
 
     def read_detail(self, object_list, bundle):
+        if bundle.request.path.rstrip('/').endswith('/schema'):
+            return True
         if bundle.obj is None:
             return object_list
         return self.read_list(object_list, bundle).filter(pk=bundle.obj.pk)
@@ -89,12 +92,6 @@ class AuthenticatedModelResource(ModelResource):
             bundle.data[name] = getattr(bundle.obj, name)
         bundle.data['resource_uri'] = self.get_resource_uri(bundle)
         return bundle
-
-    def is_authenticated(self, request, **kwargs):
-        if request.path.rstrip('/').endswith('/schema'):
-            return True
-        return super().is_authenticated(request, **kwargs)
-
 
     def authorized_read_detail(self, object_list, bundle):
         if bundle.obj is None:
