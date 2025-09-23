@@ -66,6 +66,7 @@ class AuthenticatedModelResource(ModelResource):
         authorization        = ModelLevelAuthorization()
         abstract             = True  # not a real resource
         include_resource_uri = True
+        list_allowed_methods = ['get', 'post']
 
     def __new__(cls, *args, **kwargs):
         """Automatically set resource_name if missing."""
