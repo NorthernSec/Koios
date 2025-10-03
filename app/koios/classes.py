@@ -1,6 +1,6 @@
 from tastypie.resources      import Resource, ModelResource
 from tastypie.authentication import ApiKeyAuthentication
-from tastypie.authorization  import DjangoAuthorization
+from tastypie.authorization  import Authorization, DjangoAuthorization
 
 
 class Singleton(type):
@@ -10,60 +10,12 @@ class Singleton(type):
       cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
     return cls._instances[cls]
 
-class ModelLevelAuthorization(DjangoAuthorization):
-    def read_list(self, object_list, bundle):
-        if bundle.request.path.rstrip('/').endswith('/schema'):
-            return object_list  # Allows access
-        # Allow all objects if the user has model-level view permission
-        if bundle.request.user.has_perm(
-            f"{object_list.model._meta.app_label}.view_{object_list.model._meta.model_name}"
-        ):
-            return object_list
-        return object_list.none()
-
-    def read_detail(self, object_list, bundle):
-        if bundle.request.path.rstrip('/').endswith('/schema'):
-            return True
-        if bundle.obj is None:
-            return object_list
-        return self.read_list(object_list, bundle).filter(pk=bundle.obj.pk)
-
-    def create_list(self, object_list, bundle):
-        # Allow bulk create if user has add permission
-        if bundle.request.user.has_perm(
-            f"{object_list.model._meta.app_label}.add_{object_list.model._meta.model_name}"
-        ):
-            return object_list
-        return object_list.none()
-
-    def create_detail(self, object_list, bundle):
-        return self.create_list(object_list, bundle).filter(pk=bundle.obj.pk)
-
-    def update_list(self, object_list, bundle):
-        if bundle.request.user.has_perm(
-            f"{object_list.model._meta.app_label}.change_{object_list.model._meta.model_name}"
-        ):
-            return object_list
-        return object_list.none()
-
-    def update_detail(self, object_list, bundle):
-        return self.update_list(object_list, bundle).filter(pk=bundle.obj.pk)
-
-    def delete_list(self, object_list, bundle):
-        if bundle.request.user.has_perm(
-            f"{object_list.model._meta.app_label}.delete_{object_list.model._meta.model_name}"
-        ):
-            return object_list
-        return object_list.none()
-
-    def delete_detail(self, object_list, bundle):
-        return self.delete_list(object_list, bundle).filter(pk=bundle.obj.pk)
 
 
 class AuthenticatedModelResource(ModelResource):
     class Meta:
         authentication       = ApiKeyAuthentication()
-        authorization        = ModelLevelAuthorization()
+        authorization        = DjangoAuthorization()
         abstract             = True  # not a real resource
         include_resource_uri = True
         list_allowed_methods = ['get', 'post']
@@ -104,5 +56,5 @@ class AuthenticatedResource(Resource):
     """Base for non-model Tastypie resources that still require authentication."""
     class Meta:
         authentication = ApiKeyAuthentication()
-        authorization  = ModelLevelAuthorization()
+        authorization  = Authorization()  # Manual implementation required
         abstract       = True
