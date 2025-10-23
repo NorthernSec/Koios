@@ -8,6 +8,7 @@ _DEFAULTS = {
     'secret_key':    ("KOIOS_SECRET_KEY",    None),
     'allowed_hosts': ("KOIOS_ALLOWED_HOSTS", []),
     'media_path':    ("KOIOS_MEDIA_PATH",    'media'),
+    'data_path':     ("KOIOS_DATA_PATH",     'data'),
     'database': { 'engine':   ("KOIOS_DB_ENGINE", 'django.db.backends.postgresql'),
                   'name':     ("KOIOS_DB_NAME",   'koios'),
                   'user':     ("KOIOS_DB_USER",   'koios'),
@@ -49,7 +50,15 @@ class Config():
         if not path.startswith("/"): # relative path:
             base = BASE_DIR = Path(__file__).resolve().parent.parent
             return base / path
-        return path
+        return Path(path)
+
+    @property
+    def data_path(self):
+        path = self._get_property(*_DEFAULTS['data_path'])
+        if not path.startswith("/"): # relative path:
+            base = BASE_DIR = Path(__file__).resolve().parent.parent
+            return base / path
+        return Path(path)
 
     @property
     def database_engine(self):
