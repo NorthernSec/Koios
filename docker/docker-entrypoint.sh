@@ -15,7 +15,7 @@ if [ -f "requirements.txt" ]; then
    pip install --upgrade --quiet --root-user-action=ignore -r requirements.txt
 fi
 
-if [ -f "requirements.txt" ]; then
+if [ -f "app-requirements.txt" ]; then
    pip install --upgrade --quiet --root-user-action=ignore -r app-requirements.txt
 fi
 
