@@ -33,8 +33,10 @@ urlpatterns = [
 for project in get_projects():
     try:
         urlpatterns.append( path(project+"/", include(project+".urls")) )
-    except:
+    except ModuleNotFoundError:
         print("No URLs found for "+project)
+    except Exception as e:
+        print(f"[!] Error importing {project}: {e}")
 
 # Load project URLs - API
 # v1 API
