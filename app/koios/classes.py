@@ -1,5 +1,5 @@
 from tastypie.resources      import Resource, ModelResource
-from tastypie.authentication import ApiKeyAuthentication
+from tastypie.authentication import ApiKeyAuthentication, SessionAuthentication
 from tastypie.authorization  import Authorization, DjangoAuthorization
 
 
@@ -11,10 +11,25 @@ class Singleton(type):
     return cls._instances[cls]
 
 
+# Custom Authentication Method
+class ApiKeyOrSessionAuthentication(ApiKeyAuthentication):
+    """
+    Authenticate either via ApiKey or via session (user login).
+    """
+
+    def is_authenticated(self, request, **kwargs):
+        # First, try session authentication
+        session_auth = SessionAuthentication()
+        if session_auth.is_authenticated(request, **kwargs):
+            return True
+
+        # Fall back to ApiKeyAuthentication
+        return super().is_authenticated(request, **kwargs)
+
 
 class AuthenticatedModelResource(ModelResource):
     class Meta:
-        authentication       = ApiKeyAuthentication()
+        authentication       = ApiKeyOrSessionAuthentication()
         authorization        = DjangoAuthorization()
         abstract             = True  # not a real resource
         include_resource_uri = True
@@ -55,6 +70,6 @@ class AuthenticatedModelResource(ModelResource):
 class AuthenticatedResource(Resource):
     """Base for non-model Tastypie resources that still require authentication."""
     class Meta:
-        authentication = ApiKeyAuthentication()
-        authorization  = Authorization()  # Manual implementation required
+        authentication = ApiKeyOrSessionAuthentication()
+        authorization  = Authorization()
         abstract       = True
