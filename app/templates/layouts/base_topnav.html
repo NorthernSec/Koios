@@ -1,0 +1,87 @@
+{# core/templates/layouts/base_topbar.html #}
+{% load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Koios{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="{% static 'koios/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'koios/css/custom/nav.css' %}" rel="stylesheet">
+    {% block custom_css %}{% endblock %}
+
+    <!-- Custom JavaScript -->
+    {% block custom_js %} {% endblock %}
+</head>
+<body>
+
+<!-- Top Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">MySite</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topbarNav"
+            aria-controls="topbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="topbarNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+        {% for app in modular_nav %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown{{ forloop.counter }}"
+               role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+              {{ app.app_label }}
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown{{ forloop.counter }}">
+              {% for section in app.sections %}
+                <li class="dropstart">
+                  {% if section.children %}
+                    <a class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" href="#">
+                      {% if section.icon %}<i class="icon-{{ section.icon }}"></i>{% endif %}
+                      {{ section.name }}
+                    </a>
+                    <ul class="dropdown-menu">
+                      {% for child in section.children %}
+                        <li>
+                          <a class="dropdown-item" href="{% url child.endpoint %}">
+                            {% if child.icon %}<i class="icon-{{ child.icon }}"></i>{% endif %}
+                            {{ child.name }}
+                          </a>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% else %}
+                    {% if section.endpoint %}
+                      <a class="dropdown-item" href="{% url section.endpoint %}">
+                        {% if section.icon %}<i class="icon-{{ section.icon }}"></i>{% endif %}
+                        {{ section.name }}
+                      </a>
+                    {% else %}
+                      <span class="dropdown-item-text">
+                        {% if section.icon %}<i class="icon-{{ section.icon }}"></i>{% endif %}
+                        {{ section.name }}
+                      </span>
+                    {% endif %}
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Page content -->
+<main class="container mt-4">
+    {% block content %}
+    <!-- Page-specific content goes here -->
+    {% endblock %}
+</main>
+</body>
+</html>

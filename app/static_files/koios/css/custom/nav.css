@@ -1,0 +1,5 @@
+@media (max-width: 716px) {
+    .dropdown-item::before {
+        transform: rotate(-90deg);
+    }
+}
