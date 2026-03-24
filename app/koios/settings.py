@@ -43,10 +43,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Third Party
     'tastypie',
+    'csp',
 ]
 INSTALLED_APPS.extend(get_projects())
 
 MIDDLEWARE = [
+    # Third Party
+    'csp.middleware.CSPMiddleware',
+    # Default
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -138,3 +142,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Media Storage
 MEDIA_URL = '/media/'         # URL prefix for serving files
 MEDIA_ROOT = conf.media_path  # absolute path on disk
+
+
+# Custom Security Headers
+# Disable MIME detection
+SECURE_CONTENT_TYPE_NOSNIFF = conf.disable_mime_sniffing
+
+# Content Security Policy
+CONTENT_SECURITY_POLICY = {
+    "EXCLUDE_URL_PREFIXES": [],
+    "DIRECTIVES": {
+        "default-src": conf.csp_default_src,
+        "script-src":  conf.csp_script_src,
+        "style-src":   conf.csp_style_src,
+        "img-src":     conf.csp_img_src,
+        "font-src":    conf.csp_font_src,
+#        "frame-ancestors": [SELF],
+#        "form-action": [SELF],
+        "report-uri": "/csp_report/",
+    },
+}
