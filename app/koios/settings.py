@@ -143,6 +143,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'         # URL prefix for serving files
 MEDIA_ROOT = conf.media_path  # absolute path on disk
 
+# Koios Settings
+LANDINGPAGE = conf.landingpage_view
 
 # Custom Security Headers
 # Disable MIME detection

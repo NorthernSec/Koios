@@ -21,7 +21,8 @@ _DEFAULTS = {
                                  'img_src':     ("CSP_IMG_SRC",     "'self',data:"),
                                  'font_src':    ("CSP_FONT_SRC",    "'self'"),
                                  'report_only': ("CSP_REPORT_ONLY", True)},
-    'mime_sniffing': ("DISABLE_MIME_SNIFFING", True),
+    'mime_sniffing':    ("DISABLE_MIME_SNIFFING", True),
+    'landingpage_view': ("LANDINGPAGE_VIEW",      None),
 }
 
 class Config():
@@ -124,3 +125,7 @@ class Config():
     @property
     def disable_mime_sniffing(self):
         return bool(self._get_property(*_DEFAULTS['mime_sniffing']))
+
+    @property
+    def landingpage_view(self):
+        return self._get_property(*_DEFAULTS['landingpage_view'])
