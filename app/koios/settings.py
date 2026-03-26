@@ -9,8 +9,10 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
 from pathlib import Path
+
+from  csp.constants import NONCE as CSP_NONCE
+from  csp.constants import SELF  as CSP_SELF
 
 from koios.functions import get_projects
 from koios.config    import Config
@@ -72,8 +74,13 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',
                 'koios.context_processors.modular_nav',
+                "csp.context_processors.nonce",
             ],
+            "libraries": {
+                "csp": "csp.templatetags.csp",
+            }
         },
     },
 ]
@@ -150,15 +157,29 @@ LANDINGPAGE = conf.landingpage_view
 # Disable MIME detection
 SECURE_CONTENT_TYPE_NOSNIFF = conf.disable_mime_sniffing
 
+
+
+def parse_csp(settings):
+    new_settings = []
+    for s in settings:
+        if s.lower() == "nonce":
+            new_settings.append(CSP_NONCE)
+        elif s.lower() in ["self", "'self'"]:
+            new_settings.append(CSP_SELF)
+        else:
+            new_settings.append(s)
+    return new_settings
+
+
 # Content Security Policy
 CONTENT_SECURITY_POLICY = {
     "EXCLUDE_URL_PREFIXES": [],
     "DIRECTIVES": {
-        "default-src": conf.csp_default_src,
-        "script-src":  conf.csp_script_src,
-        "style-src":   conf.csp_style_src,
-        "img-src":     conf.csp_img_src,
-        "font-src":    conf.csp_font_src,
+        "default-src": parse_csp(conf.csp_default_src),
+        "script-src":  parse_csp(conf.csp_script_src),
+        "style-src":   parse_csp(conf.csp_style_src),
+        "img-src":     parse_csp(conf.csp_img_src),
+        "font-src":    parse_csp(conf.csp_font_src),
 #        "frame-ancestors": [SELF],
 #        "form-action": [SELF],
         "report-uri": "/csp_report/",
