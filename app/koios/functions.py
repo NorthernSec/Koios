@@ -1,3 +1,4 @@
+import importlib
 import inspect
 import os
 import json
@@ -9,11 +10,33 @@ from koios.config        import Config
 
 runpath = os.path.dirname(os.path.realpath(__file__))
 
-def get_projects():
+def get_plugin_app(module_name):
+    try:
+        module = importlib.import_module(f"{module_name}.apps")
+    except Exception:
+        # TODO: Logging
+        return
+    is_app = lambda x: isinstance(getattr(module, x), type)
+    apps   = [getattr(module, attr) for attr in dir(module) if is_app(attr)]
+    apps   = [app for app in apps if "plugin_meta" in dir(app)]
+    if len(apps) > 1:
+        # TODO: Logging
+        print("Invalid plugin: Multiple app configs not currently supported.")
+        return None
+    return apps[0] if apps else None
+
+
+def get_projects(with_deps=False):
     projects = []
     for path, folders, files in os.walk(os.path.join(runpath, "..")):
-        if "models.py" in files:
-            projects.append(os.path.basename(path))
+        if "apps.py" in files:
+            module_name = os.path.basename(path)
+            app = get_plugin_app(module_name)
+            if not app:
+                continue
+            if with_deps:
+                projects.extend(app.plugin_meta.get('dependencies', []))
+            projects.append(module_name)
     return projects
 
 

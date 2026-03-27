@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'tastypie',
     'csp',
 ]
-INSTALLED_APPS.extend(get_projects())
+[INSTALLED_APPS.append(app) for app in get_projects(with_deps=True)
+    if app not in INSTALLED_APPS]
 
 MIDDLEWARE = [
     # Third Party
@@ -121,6 +122,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -182,6 +186,6 @@ CONTENT_SECURITY_POLICY = {
         "font-src":    parse_csp(conf.csp_font_src),
 #        "frame-ancestors": [SELF],
 #        "form-action": [SELF],
-        "report-uri": "/csp_report/",
+        "report-uri": "/csp-report/",
     },
 }

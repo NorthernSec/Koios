@@ -7,7 +7,7 @@ from django.urls.conf     import include, re_path
 from django.views.generic import RedirectView
 from tastypie.api         import Api
 
-from koios.functions  import get_projects
+from koios.functions  import get_projects, get_plugin_app
 from koios.classes    import AuthenticatedResource, AuthenticatedModelResource
 from koios.settings   import LANDINGPAGE
 
@@ -23,7 +23,9 @@ if LANDINGPAGE:
 # Load project URLs - Views
 for project in get_projects():
     try:
-        urlpatterns.append( path(project+"/", include(project+".urls")) )
+        app  = get_plugin_app(project)
+        slug = (app.plugin_meta.get('url_slug') or project).rstrip("/")
+        urlpatterns.append( path(slug+"/", include(project+".urls")) )
     except ModuleNotFoundError:
         print("No URLs found for "+project)
     except Exception as e:
