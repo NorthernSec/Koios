@@ -13,8 +13,9 @@ runpath = os.path.dirname(os.path.realpath(__file__))
 def get_plugin_app(module_name):
     try:
         module = importlib.import_module(f"{module_name}.apps")
-    except Exception:
+    except Exception as e:
         # TODO: Logging
+        print(f"Couldn't import {module_name}: {e}")
         return
     is_app = lambda x: isinstance(getattr(module, x), type)
     apps   = [getattr(module, attr) for attr in dir(module) if is_app(attr)]
@@ -35,7 +36,8 @@ def get_projects(with_deps=False):
             if not app:
                 continue
             if with_deps:
-                projects.extend(app.plugin_meta.get('dependencies', []))
+                deps = app.plugin_meta.get('dependencies', {}).get('apps', [])
+                projects.extend(deps)
             projects.append(module_name)
     return projects
 
