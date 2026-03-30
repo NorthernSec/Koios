@@ -8,8 +8,11 @@ class CspReportConfig(AppConfig):
         "nav_label":    None,
         "nav":          [],
         "url_slug":     "csp-report",
-        "dependencies": [ 'csp' ],
-        "middleware":   [ 'csp.middleware.CSPMiddleware'],
-        "template_context_processors": [ "csp.context_processors.nonce" ],
-        "template_libraries":          { "csp": "csp.templatetags.csp" },
+        "dependencies": {
+            'apps':         [ 'csp' ],
+            "middleware":   [ 'csp.middleware.CSPMiddleware' ],
+            "template_context_processors": [ 'csp.context_processors.nonce' ],
+            "template_libraries":          { "csp": "csp.templatetags.csp" },
+
+        }
     }
