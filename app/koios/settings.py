@@ -9,12 +9,13 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-from pathlib import Path
+from itertools import chain
+from pathlib   import Path
 
 from  csp.constants import NONCE as CSP_NONCE
 from  csp.constants import SELF  as CSP_SELF
 
-from koios.functions import get_projects
+from koios.functions import get_projects, get_plugin_app
 from koios.config    import Config
 conf = Config()
 
@@ -34,8 +35,11 @@ DEBUG = True
 ALLOWED_HOSTS = conf.allowed_hosts
 
 
-# Application definition
+# Get custom app dependencies
+CUSTOM_APP_DEPS = [get_plugin_app(app).plugin_meta.get('dependencies',{})
+                       for app in get_projects()]
 
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -62,6 +66,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+for mid in chain(*[app.get('middleware',[]) for app in CUSTOM_APP_DEPS]):
+    if mid not in MIDDLEWARE:
+        MIDDLEWARE.append(mid)
+
 
 ROOT_URLCONF = 'koios.urls'
 
@@ -85,6 +93,17 @@ TEMPLATES = [
         },
     },
 ]
+for cont in chain(*[app.get('template_context_processors',[]) for app in CUSTOM_APP_DEPS]):
+    if cont not in TEMPLATES[0]["OPTIONS"]["context_processors"]:
+        TEMPLATES[0]["OPTIONS"]["context_processors"].append(cont)
+for libs in [app.get('template_libraries',{}) for app in CUSTOM_APP_DEPS]:
+    for key, val in libs.items():
+        if key not in TEMPLATES[0]["OPTIONS"]["libraries"].keys():
+            TEMPLATES[0]["OPTIONS"]["libraries"][key] = val
+        else:
+            print(f"Key already exists: {key}")
+            #TODO: Logging
+
 
 WSGI_APPLICATION = 'koios.wsgi.application'
 
@@ -125,6 +144,9 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+for auth in chain(*[app.get('authentication_backends',[]) for app in CUSTOM_APP_DEPS]):
+    if auth not in AUTHENTICATION_BACKENDS:
+        AUTHENTICATION_BACKENDS.append(auth)
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -161,6 +183,10 @@ LANDINGPAGE = conf.landingpage_view
 # Disable MIME detection
 SECURE_CONTENT_TYPE_NOSNIFF = conf.disable_mime_sniffing
 
+# Add extra variables from apps
+for vars in [app.get('extra_vars',{}) for app in CUSTOM_APP_DEPS]:
+    for k, v in vars.items():
+        locals()[k] = v
 
 
 def parse_csp(settings):
