@@ -4,7 +4,7 @@ from django.apps import AppConfig
 class CspReportConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name        = 'csp_report'
-    plugin_meta = {
+    applet_meta = {
         "nav_label":    None,
         "nav":          [],
         "url_slug":     "csp-report",

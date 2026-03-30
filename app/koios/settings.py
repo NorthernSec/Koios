@@ -15,7 +15,7 @@ from pathlib   import Path
 from  csp.constants import NONCE as CSP_NONCE
 from  csp.constants import SELF  as CSP_SELF
 
-from koios.functions import get_projects, get_plugin_app
+from koios.functions import get_applets, get_applet_app
 from koios.config    import Config
 conf = Config()
 
@@ -36,8 +36,8 @@ ALLOWED_HOSTS = conf.allowed_hosts
 
 
 # Get custom app dependencies
-CUSTOM_APP_DEPS = [get_plugin_app(app).plugin_meta.get('dependencies',{})
-                       for app in get_projects()]
+CUSTOM_APP_DEPS = [get_applet_app(app).applet_meta.get('dependencies',{})
+                       for app in get_applets()]
 
 # Application definition
 INSTALLED_APPS = [
@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'tastypie',
     'csp',
 ]
-[INSTALLED_APPS.append(app) for app in get_projects(with_deps=True)
+[INSTALLED_APPS.append(app) for app in get_applets(with_deps=True)
     if app not in INSTALLED_APPS]
 
 MIDDLEWARE = [

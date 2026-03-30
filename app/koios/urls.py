@@ -1,4 +1,3 @@
-
 from importlib            import import_module
 from django.conf          import settings
 from django.contrib       import admin
@@ -7,7 +6,7 @@ from django.urls.conf     import include, re_path
 from django.views.generic import RedirectView
 from tastypie.api         import Api
 
-from koios.functions  import get_projects, get_plugin_app
+from koios.functions  import get_applets, get_applet_app
 from koios.classes    import AuthenticatedResource, AuthenticatedModelResource
 from koios.settings   import LANDINGPAGE
 
@@ -20,18 +19,18 @@ if LANDINGPAGE:
         path('', RedirectView.as_view(pattern_name=LANDINGPAGE, permanent=False))
     )
 
-# Load project URLs - Views
-for project in get_projects():
+# Load applet URLs - Views
+for applet in get_applets():
     try:
-        app  = get_plugin_app(project)
-        slug = (app.plugin_meta.get('url_slug') or project).rstrip("/")
-        urlpatterns.append( path(slug+"/", include(project+".urls")) )
+        app  = get_applet_app(applet)
+        slug = (app.applet_meta.get('url_slug') or applet).rstrip("/")
+        urlpatterns.append( path(slug+"/", include(applet+".urls")) )
     except ModuleNotFoundError:
-        print("No URLs found for "+project)
+        print("No URLs found for "+applet)
     except Exception as e:
-        print(f"[!] Error importing {project}: {e}")
+        print(f"[!] Error importing {applet}: {e}")
 
-# Load project URLs - API
+# Load applet URLs - API
 # v1 API
 v1_api = Api(api_name="v1")
 
