@@ -11,13 +11,13 @@ export PIP_DISABLE_PIP_VERSION_CHECK=1
 export PIP_ROOT_USER_ACTION=ignore
 
 echo "📦 Installing requirements"
-if [ -f "requirements.txt" ]; then
-   pip install --upgrade --quiet --root-user-action=ignore -r requirements.txt
-fi
+tmp_requirements=$(mktemp)
 
-if [ -f "app-requirements.txt" ]; then
-   pip install --upgrade --quiet --root-user-action=ignore -r app-requirements.txt
-fi
+find . -type f -name "requirements.txt" -exec cat {} + >> "$tmp_requirements"
+sort -u "$tmp_requirements" > "${tmp_requirements}_sorted"
+pip install --upgrade --root-user-action=ignore --quiet \
+            -r "${tmp_requirements}_sorted"
+
 
 ###
 # Collect Static
