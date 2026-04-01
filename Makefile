@@ -35,6 +35,9 @@ shell:
 
 # Bring up the full stack
 up:
+	docker compose up -d
+
+up-monitor:
 	docker compose up
 
 # Stop containers
