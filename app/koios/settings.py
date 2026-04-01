@@ -32,8 +32,8 @@ SECRET_KEY = conf.secret_key
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = conf.allowed_hosts
-
+ALLOWED_HOSTS        = conf.allowed_hosts
+CSRF_TRUSTED_ORIGINS = conf.csrf_trusted_origins
 
 # Get custom app dependencies
 CUSTOM_APP_DEPS = [get_applet_app(app).applet_meta.get('dependencies',{})

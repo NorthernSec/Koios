@@ -3,12 +3,15 @@ import secrets
 
 from pathlib import Path
 
+
 _SECRET_KEY_PATH = "/etc/koios/secret_key"
 _DEFAULTS = {
-    'secret_key':    ("KOIOS_SECRET_KEY",    None),
-    'allowed_hosts': ("KOIOS_ALLOWED_HOSTS", []),
-    'media_path':    ("KOIOS_MEDIA_PATH",    'media'),
-    'data_path':     ("KOIOS_DATA_PATH",     'data'),
+    'secret_key':    ("KOIOS_SECRET_KEY",           None),
+    'allowed_hosts': ("KOIOS_ALLOWED_HOSTS",        []),
+    'csrf_trusted':  ("KOIOS_CSRF_TRUSTED_ORIGINS", []),
+    'media_path':    ("KOIOS_MEDIA_PATH",           'media'),
+    'data_path':     ("KOIOS_DATA_PATH",            'data'),
+    'log_path':      ("KOIOS_LOG_PATH",             'logs'),
     'database': { 'engine':   ("KOIOS_DB_ENGINE", 'django.db.backends.postgresql'),
                   'name':     ("KOIOS_DB_NAME",   'koios'),
                   'user':     ("KOIOS_DB_USER",   'koios'),
@@ -53,10 +56,24 @@ class Config():
         return hosts
 
     @property
+    def csrf_trusted_origins(self):
+        def domain_to_url(d):
+            if (d.startswith("https://")  or d.startswith("http://")
+                or d.startswith("wss://") or d.startswith("ws://")):
+                return d
+            return "https://"+d
+        hosts = self._get_property(*_DEFAULTS['csrf_trusted'])+self.allowed_hosts
+        if isinstance(hosts, str):
+            hosts = hosts.split(',')
+        hosts = list(set([domain_to_url(h) for h in hosts]))
+        return hosts
+
+
+    @property
     def media_path(self):
         path = self._get_property(*_DEFAULTS['media_path'])
         if not path.startswith("/"): # relative path:
-            base = BASE_DIR = Path(__file__).resolve().parent.parent
+            base  = Path(__file__).resolve().parent.parent
             return base / path
         return Path(path)
 
@@ -64,7 +81,15 @@ class Config():
     def data_path(self):
         path = self._get_property(*_DEFAULTS['data_path'])
         if not path.startswith("/"): # relative path:
-            base = BASE_DIR = Path(__file__).resolve().parent.parent
+            base = Path(__file__).resolve().parent.parent
+            return base / path
+        return Path(path)
+
+    @property
+    def log_path(self):
+        path = self._get_property(*_DEFAULTS['log_path'])
+        if not path.startswith("/"): # relative path:
+            base = Path(__file__).resolve().parent.parent
             return base / path
         return Path(path)
 
