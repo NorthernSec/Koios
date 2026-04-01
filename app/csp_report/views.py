@@ -6,6 +6,7 @@ from pprint import pprint
 
 IGNORE_SOURCE_FILES = [
     'sandbox eval code',
+    'moz-extension'
 ]
 
 @csrf_exempt
