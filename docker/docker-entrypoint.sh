@@ -13,11 +13,24 @@ export PIP_ROOT_USER_ACTION=ignore
 echo "📦 Installing requirements"
 tmp_requirements=$(mktemp)
 
-find . -type f -name "requirements.txt" -exec cat {} + >> "$tmp_requirements"
-sort -u "$tmp_requirements" > "${tmp_requirements}_sorted"
-pip install --upgrade --root-user-action=ignore --quiet \
-            -r "${tmp_requirements}_sorted"
+python3 -c "
+import tomllib
+from pathlib import Path
 
+deps = set()
+
+for file in Path('.').rglob('applet.toml'):
+    with open(file, 'rb') as f:
+        data = tomllib.load(f)
+    deps.update(data.get('python', {}).get('dependencies', []))
+
+print('\n'.join(sorted(deps)))
+" > "${tmp_requirements}_sorted"
+
+if [ -s "${tmp_requirements}_sorted" ]; then
+    pip install --upgrade --root-user-action=ignore --quiet \
+        -r "${tmp_requirements}_sorted"
+fi
 
 ###
 # Collect Static

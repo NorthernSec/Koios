@@ -40,3 +40,7 @@ up:
 # Stop containers
 down:
 	docker compose down
+
+# Build container
+build:
+	APT_PACKAGES="$$(python3 docker/dependency_collector.py)" docker compose build
