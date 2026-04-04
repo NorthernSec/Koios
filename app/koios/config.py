@@ -1,8 +1,10 @@
+import logging
 import os
 import secrets
 
 from pathlib import Path
 
+logger = logging.getLogger('koios')
 
 _SECRET_KEY_PATH = "/etc/koios/secret_key"
 _DEFAULTS = {
@@ -12,6 +14,7 @@ _DEFAULTS = {
     'media_path':    ("KOIOS_MEDIA_PATH",           'media'),
     'data_path':     ("KOIOS_DATA_PATH",            'data'),
     'log_path':      ("KOIOS_LOG_PATH",             'logs'),
+    'log_level':     ("KOIOS_LOG_LEVEL",            'INFO'),
     'database': { 'engine':   ("KOIOS_DB_ENGINE", 'django.db.backends.postgresql'),
                   'name':     ("KOIOS_DB_NAME",   'koios'),
                   'user':     ("KOIOS_DB_USER",   'koios'),
@@ -32,20 +35,25 @@ class Config():
     def _get_property(self, env, default):
         if os.environ.get(env):
             return os.environ.get(env)
+        logger.debug(f"No env variable found for {env}."
+                     f" Loading default value {default}")
         return default
 
     @property
     def secret_key(self):
         env = self._get_property(*_DEFAULTS['secret_key'])
         if env:
+            logger.debug("Loaded secret key form env variable")
             return env
         if not os.path.exists(_SECRET_KEY_PATH):
+            logger.info("No secret key found. Creating new one.")
             folder = os.path.dirname(_SECRET_KEY_PATH)
             Path(folder).mkdir(parents=True, exist_ok=True)
             key = secrets.token_urlsafe(64)
             open(_SECRET_KEY_PATH, 'w').write(key)
             return key
         else:
+            logger.debug("Loaded secret key from secret file.")
             return open(_SECRET_KEY_PATH).read().strip()
 
     @property
@@ -92,6 +100,13 @@ class Config():
             base = Path(__file__).resolve().parent.parent
             return base / path
         return Path(path)
+
+    @property
+    def log_level(self):
+        level = self._get_property(*_DEFAULTS['log_level']).upper()
+        if level not in ("DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL"):
+            return "INFO"
+        return level
 
     @property
     def database_engine(self):

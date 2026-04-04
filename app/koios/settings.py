@@ -9,6 +9,9 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+import logging
+import logging.config
+
 from itertools import chain
 from pathlib   import Path
 
@@ -17,6 +20,7 @@ from  csp.constants import SELF  as CSP_SELF
 
 from koios.functions import get_applets, get_applet_app
 from koios.config    import Config
+
 conf = Config()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -36,8 +40,23 @@ ALLOWED_HOSTS        = conf.allowed_hosts
 CSRF_TRUSTED_ORIGINS = conf.csrf_trusted_origins
 
 # Get custom app dependencies
-CUSTOM_APP_DEPS = [get_applet_app(app).applet_meta.get('dependencies',{})
+CUSTOM_APP_DEPS = [(app, get_applet_app(app).applet_meta.get('dependencies',{}))
                        for app in get_applets()]
+
+# First, look for logging applets, so logs further down are made properly
+logger_name = None
+for app, deps in CUSTOM_APP_DEPS:
+    if 'LOGGING' in deps.get('extra_vars',{}).keys():
+        for key, val in deps.get('extra_vars',{}).items():
+            locals()[key] = val
+        logger_name = app
+        break
+if locals().get('LOGGING'):
+    logging.config.dictConfig(LOGGING)
+if logger_name:
+    logging.info(f"Logger set to {logger_name}", extra={"logger": logger_name})
+logger = logging.getLogger('koios')
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -51,8 +70,6 @@ INSTALLED_APPS = [
     'tastypie',
     'csp',
 ]
-[INSTALLED_APPS.append(app) for app in get_applets(with_deps=True)
-    if app not in INSTALLED_APPS]
 
 MIDDLEWARE = [
     # Third Party
@@ -66,10 +83,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-for mid in chain(*[app.get('middleware',[]) for app in CUSTOM_APP_DEPS]):
-    if mid not in MIDDLEWARE:
-        MIDDLEWARE.append(mid)
-
 
 ROOT_URLCONF = 'koios.urls'
 
@@ -93,17 +106,6 @@ TEMPLATES = [
         },
     },
 ]
-for cont in chain(*[app.get('template_context_processors',[]) for app in CUSTOM_APP_DEPS]):
-    if cont not in TEMPLATES[0]["OPTIONS"]["context_processors"]:
-        TEMPLATES[0]["OPTIONS"]["context_processors"].append(cont)
-for libs in [app.get('template_libraries',{}) for app in CUSTOM_APP_DEPS]:
-    for key, val in libs.items():
-        if key not in TEMPLATES[0]["OPTIONS"]["libraries"].keys():
-            TEMPLATES[0]["OPTIONS"]["libraries"][key] = val
-        else:
-            print(f"Key already exists: {key}")
-            #TODO: Logging
-
 
 WSGI_APPLICATION = 'koios.wsgi.application'
 
@@ -144,9 +146,6 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
-for auth in chain(*[app.get('authentication_backends',[]) for app in CUSTOM_APP_DEPS]):
-    if auth not in AUTHENTICATION_BACKENDS:
-        AUTHENTICATION_BACKENDS.append(auth)
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -183,11 +182,6 @@ LANDINGPAGE = conf.landingpage_view
 # Disable MIME detection
 SECURE_CONTENT_TYPE_NOSNIFF = conf.disable_mime_sniffing
 
-# Add extra variables from apps
-for vars in [app.get('extra_vars',{}) for app in CUSTOM_APP_DEPS]:
-    for k, v in vars.items():
-        locals()[k] = v
-
 
 def parse_csp(settings):
     new_settings = []
@@ -215,3 +209,52 @@ CONTENT_SECURITY_POLICY = {
         "report-uri": "/csp-report/",
     },
 }
+
+
+for applet, dependencies in CUSTOM_APP_DEPS:
+    extra = {'applet': applet}
+    logger.debug(f"Loading applet {applet}", extra=extra)
+    # Dependency Apps
+    for app in dependencies.get('apps',[]):
+        logger.debug(f"{applet} loaded dependency {app}", extra=extra)
+        if app not in INSTALLED_APPS:
+            INSTALLED_APPS.append(app)
+    if applet not in INSTALLED_APPS:
+        INSTALLED_APPS.append(applet)
+    # Middleware
+    for mid in dependencies.get('middleware',[]):
+        logger.debug(f"{applet} loaded middleware {mid}", extra=extra)
+        if mid not in MIDDLEWARE:
+            MIDDLEWARE.applet(mid)
+    # Template Context Processors
+    for cont in dependencies.get('template_context_processors',[]):
+        logger.debug(f"{applet} loaded template context processor {cont}",
+                     extra=extra)
+        if cont not in TEMPLATES[0]["OPTIONS"]["context_processors"]:
+            TEMPLATES[0]["OPTIONS"]["context_processors"].append(cont)
+    # Template Libraries
+    for key, val in dependencies.get('template_libraries',{}).items():
+        if key not in TEMPLATES[0]["OPTIONS"]["libraries"].keys():
+            logger.debug(f"{applet} loaded template library {key}: {val}",
+                         extra=extra)
+            TEMPLATES[0]["OPTIONS"]["libraries"][key] = val
+        else:
+            logger.warning(f"{applet} tried to load template library {val} with "
+                           f"key {key}, but that key is already taken.",
+                           extra=extra)
+    # Authentication Backends
+    for auth in dependencies.get('authentication_backends',[]):
+        logger.debug(f"{applet} loaded authentication backend {auth}",
+                     extra=extra)
+        if auth not in AUTHENTICATION_BACKENDS:
+            AUTHENTICATION_BACKENDS.append(auth)
+    # Add extra variables from apps
+    for key, val in dependencies.get('extra_vars',{}).items():
+        if applet == logger_name and key == 'LOGGING':
+            continue
+        if key in locals():
+            logger.warning(f"{applet} overwrote variable {key}", extra=extra)
+        else:
+            info = {'applet': applet, 'variable': key, 'value': val}
+            logger.debug(f"{applet} set variable {key}", extra=info)
+        locals()[key] = val

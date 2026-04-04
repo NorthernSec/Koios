@@ -1,7 +1,8 @@
 import importlib
 import inspect
-import os
 import json
+import logging
+import os
 from types               import SimpleNamespace
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http       import HttpForbidden
@@ -9,24 +10,28 @@ from koios.config        import Config
 
 
 runpath = os.path.dirname(os.path.realpath(__file__))
+logger  = logging.getLogger('koios')
 
 def is_valid_applet(module_name):
-    #TODO: Upgrade to logging
     app = get_applet_app(module_name)
     if not app:
-        print(f"Error: {module_name} is not a valid applet, or is broken.")
+        logger.error(f"{module_name} is not a valid applet, or is broken.",
+                     extra={'applet': module_name})
         return False
     meta = app.applet_meta
     if not meta.get("url_slug"):
-        print(f"WARN: {module_name} has no URL slug. It's name will be used")
-    if (not isinstance(meta.get("dependencies",{}), dict) or
-       not isinstance(meta.get("dependencies",{}).get('apps', []), list) or
-       not isinstance(meta.get("dependencies",{}).get('middleware', []), list) or
-       not isinstance(meta.get("dependencies",{}).get('template_context_processors', []), list) or
-       not isinstance(meta.get("dependencies",{}).get('template_libraries', {}), dict) or
-       not isinstance(meta.get("dependencies",{}).get('authentication_backends', []), list) or
-       not isinstance(meta.get("dependencies",{}).get('extra_vars', {}), dict)):
-        print(f"ERROR: {module_name} has an invalid dependency format. Is it outdated?")
+        logger.warning(f"{module_name} has no URL slug. It's name will be used",
+                       extra={'applet': module_name})
+    deps = meta.get("dependencies",{})
+    if (not isinstance(deps, dict) or
+       not isinstance(deps.get('apps', []), list) or
+       not isinstance(deps.get('middleware', []), list) or
+       not isinstance(deps.get('template_context_processors', []), list) or
+       not isinstance(deps.get('template_libraries', {}), dict) or
+       not isinstance(deps.get('authentication_backends', []), list) or
+       not isinstance(deps.get('extra_vars', {}), dict)):
+        logging.error("{module_name} has an invalid dependency format."
+                      " Is it outdated?", extra={'applet': module_name})
         return False
     return True
 
@@ -35,15 +40,18 @@ def get_applet_app(module_name):
     try:
         module = importlib.import_module(f"{module_name}.apps")
     except Exception as e:
-        # TODO: Logging
-        print(f"Couldn't import {module_name}: {e}")
+        logger.error(
+            f"Dependency missing while importing {module_name}.urls: {e.name}",
+            extra={'error': e, 'applet': module_name})
         return
     is_app = lambda x: isinstance(getattr(module, x), type)
     apps   = [getattr(module, attr) for attr in dir(module) if is_app(attr)]
     apps   = [app for app in apps if "applet_meta" in dir(app)]
     if len(apps) > 1:
         # TODO: Logging
-        print("Invalid applet: Multiple app configs not currently supported.")
+        logging.error(f"{module_name} is not a valid applet."
+                      " Multiple app configs not currently supported.",
+                      extra={'applet': module_name})
         return None
     return apps[0] if apps else None
 
