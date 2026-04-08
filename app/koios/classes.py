@@ -1,7 +1,8 @@
+from django.urls.conf        import re_path
 from tastypie.resources      import Resource, ModelResource
+from tastypie.authentication import Authentication
 from tastypie.authentication import ApiKeyAuthentication, SessionAuthentication
 from tastypie.authorization  import Authorization, DjangoAuthorization
-
 
 class Singleton(type):
   _instances = {}
@@ -73,3 +74,58 @@ class AuthenticatedResource(Resource):
         authentication = ApiKeyOrSessionAuthentication()
         authorization  = Authorization()
         abstract       = True
+
+
+def endpoint(methods=None):
+    methods = [m.lower() for m in (methods or ["get"])]
+    def decorator(func):
+        func._tastypie_methods = methods
+        return func
+    return decorator
+
+
+class Resource(Resource):
+    """Base for non-model Tastypie resources"""
+    class Meta:
+        authentication = Authentication()
+        authorization  = Authorization()
+        abstract = True
+
+    def get_method_handlers(self):
+        handlers = {}
+        for name, member in self.__class__.__dict__.items():
+            methods = getattr(member, "_tastypie_methods", None)
+            if not methods:
+                continue
+            for method in methods:
+                if method in handlers:
+                    raise RuntimeError(
+                        f"Duplicate handler for HTTP {method.upper()} on "
+                        f"{self.__class__.__name__}"
+                    )
+                handlers[method] = name
+        return handlers
+
+    def _dispatch_to_endpoint_method(self, request, **kwargs):
+        method = request.method.lower()
+        handlers = self.get_method_handlers()
+        if method not in handlers:
+            raise ImmediateHttpResponse(HttpMethodNotAllowed())
+        handler = getattr(self, handlers[method])
+        bundle = self.build_bundle(request=request)
+        return handler(bundle, **kwargs)
+
+    def get_list(self, request, **kwargs):
+        return self._dispatch_to_endpoint_method(request, **kwargs)
+
+    def post_list(self, request, **kwargs):
+        return self._dispatch_to_endpoint_method(request, **kwargs)
+
+    def put_list(self, request, **kwargs):
+        return self._dispatch_to_endpoint_method(request, **kwargs)
+
+    def patch_list(self, request, **kwargs):
+        return self._dispatch_to_endpoint_method(request, **kwargs)
+
+    def delete_list(self, request, **kwargs):
+        return self._dispatch_to_endpoint_method(request, **kwargs)

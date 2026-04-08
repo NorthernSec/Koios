@@ -10,6 +10,7 @@ from tastypie.api         import Api
 
 from koios.functions  import get_applets, get_applet_app
 from koios.classes    import AuthenticatedResource, AuthenticatedModelResource
+from koios.classes    import Resource
 from koios.settings   import LANDINGPAGE
 
 logger = logging.getLogger("koios")
@@ -51,23 +52,24 @@ for app in get_applets():
         api_module = import_module(f"{app}.api")
     except ModuleNotFoundError as e:
         if e.name == f"{app}.api":
-            logger.debug(f"No URLs file found for {applet}", {'applet': applet})
+            logger.debug(f"No API file found for {app}", {'app': applet})
         else:
             logger.error(
-                f"Dependency missing while importing {applet}.urls: {e.name}",
-                extra={'error': e, 'applet': applet}
+                f"Dependency missing while importing {app}.api: {e.name}",
+                extra={'error': e, 'app': applet}
             )
         continue
 
     for attr_name in dir(api_module):
         attr = getattr(api_module, attr_name)
-        if (isinstance(attr, type)
-            and issubclass(attr, (AuthenticatedResource,
-                                  AuthenticatedModelResource))
-            and attr is not AuthenticatedResource
-            and attr is not AuthenticatedModelResource):
-            logger.debug(f"Loading {attr._meta.resource_name} from {app}",
-                         extra={'applet': app,
-                                'resource': attr._meta.resource_name})
-            v1_api.register(attr())
+        if not isinstance(attr, type):
+            continue
+        if not issubclass(attr, (Resource, AuthenticatedResource, AuthenticatedModelResource)):
+            continue
+        if attr in [Resource, AuthenticatedResource, AuthenticatedModelResource]:
+            continue
+        logger.debug(f"Loading {attr._meta.resource_name} from {app}",
+                     extra={'applet': app, 'resource': attr._meta.resource_name})
+        v1_api.register(attr())
+
 urlpatterns.append( re_path(r"^api/", include(v1_api.urls)) )
