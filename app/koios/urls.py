@@ -30,17 +30,19 @@ for applet in get_applets():
         app  = get_applet_app(applet)
         slug = (app.applet_meta.get('url_slug') or applet).rstrip("/")
         urlpatterns.append( path(slug+"/", include(applet+".urls")) )
-        logger.debug(f"Loaded URL's for {applet} under {slug}", {'applet': applet})
+        logger.debug(f"Loaded URL's for {applet} under {slug}",
+                     extra={'applet': applet})
     except ModuleNotFoundError as e:
         if e.name == f"{applet}.urls":
-            logger.warning(f"No URLs file found for {applet}", {'applet': applet})
+            logger.warning(f"No URLs file found for {applet}",
+                           extra= {'applet': applet})
         else:
             logger.error(
                 f"Dependency missing while importing {applet}.urls: {e.name}",
                 extra={'error': e, 'applet': applet}
             )
     except Exception as e:
-        logger.error(f"Error importing {applet}",
+        logger.error(f"Error importing {applet}: {e}",
                      extra={'error': e, 'applet': applet})
 
 # Load applet URLs - API
@@ -52,11 +54,12 @@ for app in get_applets():
         api_module = import_module(f"{app}.api")
     except ModuleNotFoundError as e:
         if e.name == f"{app}.api":
-            logger.debug(f"No API file found for {app}", {'app': applet})
+            logger.debug(f"No API file found for {app}",
+                         extra= {'applet': applet})
         else:
             logger.error(
                 f"Dependency missing while importing {app}.api: {e.name}",
-                extra={'error': e, 'app': applet}
+                extra={'error': e, 'applet': applet}
             )
         continue
 

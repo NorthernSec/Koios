@@ -3,6 +3,7 @@ import inspect
 import json
 import logging
 import os
+import tomllib
 from types               import SimpleNamespace
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http       import HttpForbidden
@@ -39,9 +40,14 @@ def is_valid_applet(module_name):
 def get_applet_app(module_name):
     try:
         module = importlib.import_module(f"{module_name}.apps")
+    except ModuleNotFoundError as e:
+        logger.error(
+            f"Dependency missing while importing {module_name}.apps: {e.name}",
+            extra={'error': e, 'applet': module_name})
+        return
     except Exception as e:
         logger.error(
-            f"Dependency missing while importing {module_name}.urls: {e.name}",
+            f"Error while importing {module_name}.apps: {e}",
             extra={'error': e, 'applet': module_name})
         return
     is_app = lambda x: isinstance(getattr(module, x), type)
@@ -77,6 +83,24 @@ def raise_forbidden(data):
     raise ImmediateHttpResponse(
         HttpForbidden(json.dumps( { "error": True, "message": data } ),
                       content_type='application/json') )
+
+
+def get_logger():
+    for path, folders, files in os.walk(os.path.join(runpath, "..")):
+        if "applet.toml" not in files:
+            continue
+        toml_name = path + "/applet.toml"
+        try:
+            with open(toml_name, 'rb') as f:
+                data = tomllib.load(f)
+        except:
+            continue
+        if not data.get('project', {}).get('is_logger', False):
+            continue
+        module_name = os.path.basename(path)
+        app  = get_applet_app(module_name)
+        return module_name, app.applet_meta.get("dependencies", {})
+    return None, None
 
 
 def get_module_calling():

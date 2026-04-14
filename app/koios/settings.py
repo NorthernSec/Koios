@@ -18,7 +18,7 @@ from pathlib   import Path
 from  csp.constants import NONCE as CSP_NONCE
 from  csp.constants import SELF  as CSP_SELF
 
-from koios.functions import get_applets, get_applet_app
+from koios.functions import get_applets, get_applet_app, get_logger
 from koios.config    import Config
 
 conf = Config()
@@ -39,24 +39,17 @@ DEBUG = True
 ALLOWED_HOSTS        = conf.allowed_hosts
 CSRF_TRUSTED_ORIGINS = conf.csrf_trusted_origins
 
-# Get custom app dependencies
-CUSTOM_APP_DEPS = [(app, get_applet_app(app).applet_meta.get('dependencies',{}))
-                       for app in get_applets()]
 
 # First, look for logging applets, so logs further down are made properly
-logger_name = None
-for app, deps in CUSTOM_APP_DEPS:
-    if 'LOGGING' in deps.get('extra_vars',{}).keys():
-        for key, val in deps.get('extra_vars',{}).items():
-            locals()[key] = val
-        logger_name = app
-        break
+logger_name, deps = get_logger()
+if deps:
+    for key, val in deps.get('extra_vars').items():
+        locals()[key] = val
 if locals().get('LOGGING'):
     logging.config.dictConfig(LOGGING)
-if logger_name:
-    logging.info(f"Logger set to {logger_name}", extra={"logger": logger_name})
 logger = logging.getLogger('koios')
-
+if logger_name:
+    logger.info(f"Logger set to {logger_name}", extra={"logger": logger_name})
 
 # Application definition
 INSTALLED_APPS = [
@@ -210,10 +203,11 @@ CONTENT_SECURITY_POLICY = {
     },
 }
 
-
+# Get custom app dependencies
+CUSTOM_APP_DEPS = [(app, get_applet_app(app).applet_meta.get('dependencies',{}))
+                       for app in get_applets()]
 for applet, dependencies in CUSTOM_APP_DEPS:
     extra = {'applet': applet}
-    logger.debug(f"Loading applet {applet}", extra=extra)
     # Dependency Apps
     for app in dependencies.get('apps',[]):
         logger.debug(f"{applet} loaded dependency {app}", extra=extra)
@@ -221,11 +215,12 @@ for applet, dependencies in CUSTOM_APP_DEPS:
             INSTALLED_APPS.append(app)
     if applet not in INSTALLED_APPS:
         INSTALLED_APPS.append(applet)
+    logger.debug(f"Loaded applet {applet}", extra=extra)
     # Middleware
     for mid in dependencies.get('middleware',[]):
         logger.debug(f"{applet} loaded middleware {mid}", extra=extra)
         if mid not in MIDDLEWARE:
-            MIDDLEWARE.applet(mid)
+            MIDDLEWARE.append(mid)
     # Template Context Processors
     for cont in dependencies.get('template_context_processors',[]):
         logger.debug(f"{applet} loaded template context processor {cont}",
