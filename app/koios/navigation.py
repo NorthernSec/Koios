@@ -8,14 +8,12 @@ def build_nav():
     menu = []
 
     for config in apps.get_app_configs():
-        app_nav = getattr(config, "nav", None)
-        if app_nav:
-            menu.append({
-                "name":      config.nav_label,
-                "app_label": config.label,
-                "sections":  app_nav
-            })
-    menu = sorted(menu, key=lambda x: x['name'])
+        app_meta = getattr(config, "applet_meta", {})
+        if app_meta and app_meta.get('nav'):
+            item = {"app_name": config.name}
+            item.update(app_meta['nav'])
+            menu.append(item)
+    menu = sorted(menu, key=lambda x: x['app_name'])
     return menu
 
 # Build once at startup
