@@ -1,13 +1,10 @@
 import importlib
 import inspect
-import json
 import logging
 import os
 import tomllib
-from types               import SimpleNamespace
-from tastypie.exceptions import ImmediateHttpResponse
-from tastypie.http       import HttpForbidden
-from koios.config        import Config
+from types        import SimpleNamespace
+from koios.config import Config
 
 
 runpath = os.path.dirname(os.path.realpath(__file__))
@@ -77,12 +74,6 @@ def get_applets(with_deps=False):
                 applets.extend(deps)
             applets.append(module_name)
     return applets
-
-
-def raise_forbidden(data):
-    raise ImmediateHttpResponse(
-        HttpForbidden(json.dumps( { "error": True, "message": data } ),
-                      content_type='application/json') )
 
 
 def get_logger():
