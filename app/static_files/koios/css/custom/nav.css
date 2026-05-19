@@ -3,3 +3,25 @@
         transform: rotate(-90deg);
     }
 }
+
+.sidebar {
+    width: 200px;
+    transition: width 0.3s;
+}
+
+.sidebar.collapsed {
+    width: 74px;
+}
+
+.sidebar.collapsed .sidebar-text {
+    display: none;
+}
+
+.sidebar .nav-link {
+    padding-left: 6px;
+}
+
+.sidebar .nav-link i {
+    font-size: 1.2rem;
+    min-width: 30px;
+}
