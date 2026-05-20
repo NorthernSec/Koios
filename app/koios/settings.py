@@ -91,6 +91,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.request',
                 'koios.context_processors.modular_nav',
+                'koios.context_processors.koios_vars',
                 "csp.context_processors.nonce",
             ],
             "libraries": {
