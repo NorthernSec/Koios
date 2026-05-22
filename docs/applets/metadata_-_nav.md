@@ -1,6 +1,5 @@
-# Applet Metadata
+# Applet Metadata - nav
 
-## Nav
 The format of the `nav` metadata is the following:
 ```python
     applet_meta = {
@@ -9,7 +8,7 @@ The format of the `nav` metadata is the following:
             "name": "Top nav label",
             # Get icons from https://icons.getbootstrap.com/
             "icon": "pen",
-            "enpoint": "<app_name>:<path name>",
+            "endpoint": "<app_name>:<path name>",
             "sections": [
                 {
                     "name": "item 1",
