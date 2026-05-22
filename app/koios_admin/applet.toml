@@ -1,0 +1,15 @@
+[project]
+name = "Koios Management Tools"
+description = "Collection of tools to manage your Koios instance"
+version = "0.1.0"
+authors = [
+    "PidgeyL"
+]
+
+[python]
+dependencies = [
+]
+
+[apt]
+packages = [
+]

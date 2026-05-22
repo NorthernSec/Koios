@@ -11,9 +11,10 @@ manage:
 # Start a new app: make startapp name=myapp
 startapp:
 	docker compose up -d $(DATABASE)
-	docker compose run --rm $(SERVICE) python manage.py startapp $(name)
+	docker compose run --rm $(SERVICE) python manage.py startapplet $(name)
 	docker compose down
 	sudo chown -R $(shell id -u):$(shell id -g) app/$(name)
+
 
 # Apply migrations
 migrate:

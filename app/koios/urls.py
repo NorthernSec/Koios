@@ -29,7 +29,9 @@ for applet in get_applets():
     try:
         app  = get_applet_app(applet)
         slug = (app.applet_meta.get('url_slug') or applet).rstrip("/")
-        urlpatterns.append( path(slug+"/", include(applet+".urls")) )
+        if slug:  # Allows for explicitly setting the slug to /
+            slug += "/"
+        urlpatterns.append( path(slug, include(applet+".urls")) )
         logger.debug(f"Loaded URL's for {applet} under {slug}",
                      extra={'applet': applet})
     except ModuleNotFoundError as e:
