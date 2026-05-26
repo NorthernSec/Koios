@@ -6,7 +6,7 @@ class AdvisoConfig(AppConfig):
     name        = '{name}'
     applet_meta = {{
         "url_slug": "{name}",
-        "nav": {{ }}
+        "nav": {{ }},
         "dependencies": {{
             "apps": [ ],
             "middleware": [ ],
