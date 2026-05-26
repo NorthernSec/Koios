@@ -14,4 +14,5 @@ class AdvisoConfig(AppConfig):
             "template_context_processors": [ ],
             "template_libraries": {{ }},
             "extra_vars": {{ }}
+        }}
     }}
