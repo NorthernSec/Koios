@@ -61,12 +61,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Third Party
     'tastypie',
-    'csp',
 ]
 
 MIDDLEWARE = [
-    # Third Party
-    'csp.middleware.CSPMiddleware',
     # Default
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -92,10 +89,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'koios.context_processors.modular_nav',
                 'koios.context_processors.koios_vars',
-                "csp.context_processors.nonce",
             ],
             "libraries": {
-                "csp": "csp.templatetags.csp",
             }
         },
     },

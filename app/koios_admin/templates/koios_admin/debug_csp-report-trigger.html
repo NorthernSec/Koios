@@ -1,0 +1,8 @@
+{% extends "layouts/base_plain.html" %}
+
+{% block title %} Debug View | CSP Report Trigger {% endblock %}
+
+{% block content %}
+    <h1>Debug view: Trigger CSP report creation through inline script</h1>
+    <script>alert("This isn't good.");</script>
+{% endblock %}
