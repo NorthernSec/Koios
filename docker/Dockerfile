@@ -17,6 +17,7 @@ RUN apt-get update && \
 
 # Create entrypoint directory
 RUN mkdir /usr/src/entrypoint
+COPY docker/entrypoint  /usr/src/entrypoint
 
 # Create working directory & use it as the workdir
 WORKDIR /usr/src/app

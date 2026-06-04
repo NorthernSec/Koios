@@ -47,4 +47,5 @@ down:
 
 # Build container
 build:
-	APT_PACKAGES="$$(python3 docker/dependency_collector.py)" docker compose build
+	APT_PACKAGES="$$(python3 ./docker/build_dependency_collector.py)" \
+	docker compose build
