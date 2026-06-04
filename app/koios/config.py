@@ -61,6 +61,8 @@ class Config():
         hosts = self._get_property(*_DEFAULTS['allowed_hosts'])
         if isinstance(hosts, str):
             hosts = hosts.split(',')
+        if "localhost" not in hosts: # Necessry for health check
+            hosts.append("localhost")
         return hosts
 
     @property

@@ -1,7 +1,7 @@
 import json
 import logging
 
-from django.http                  import HttpResponse
+from django.http                  import HttpResponse, JsonResponse
 from django.shortcuts             import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -39,6 +39,10 @@ def csp_report(request):
 # ----
 # Debug Views
 # ----
+
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
 
 def debug_csp_report(request):
     return render(request, "koios_admin/debug_csp-report-trigger.html")

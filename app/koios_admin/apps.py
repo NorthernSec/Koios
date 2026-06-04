@@ -7,10 +7,11 @@ class KoiosAdminConfig(AppConfig):
     applet_meta = {
         "url_slug": "/",
         "dependencies": {
-            "apps":         [ ],
-            "middleware":   [ ],
+            "apps":       [ ],
+            "middleware": [ ],
             "template_context_processors": [ ],
             "template_libraries":          { },
+            "extra_vars": {},
         }
     }
 
@@ -20,4 +21,10 @@ class KoiosAdminConfig(AppConfig):
         deps['middleware'].append('csp.middleware.CSPMiddleware')
         deps['template_context_processors'].append('csp.context_processors.nonce')
         deps['template_libraries']['csp'] = "csp.templatetags.csp"
-
+    if settings.RUN_DEBUG:
+        deps['extra_vars']['DEBUG'] = True
+    else:
+        deps['extra_vars']['DEBUG'] = False
+        deps['extra_vars']['USE_X_FORWARDED_HOST'] = True
+    if settings.RUN_SSL:
+        deps['extra_vars']['SECURE_PROXY_SSL_HEADER'] = ("HTTP_X_FORWARDED_PROTO", "https")

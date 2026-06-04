@@ -34,5 +34,13 @@ RUN if [ -n "$APT_PACKAGES" ]; then \
       rm -rf /var/lib/apt/lists/*; \
     fi
 
+
+# Set Health Check
+HEALTHCHECK --interval=10s \
+            --timeout=5s \
+            --start-period=90s \
+            --retries=5 \
+    CMD python3 /usr/src/entrypoint/health_check.py
+
 # Create Entrypoint Hook
 ENTRYPOINT ["/usr/src/entrypoint/docker-entrypoint.sh"]

@@ -4,7 +4,8 @@ from koios_admin import settings, views
 app_name = 'koios_admin'
 
 urlpatterns = [
-    path('csp-report/', views.csp_report, name='csp_report'),
+    path('csp-report/', views.csp_report,   name='csp_report'),
+    path('_health',     views.health_check, name='health_check'),
 ]
 
 if settings.DEBUG_CSP:
