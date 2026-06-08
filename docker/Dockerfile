@@ -36,7 +36,7 @@ RUN if [ -n "$APT_PACKAGES" ]; then \
 
 
 # Set Health Check
-HEALTHCHECK --interval=10s \
+HEALTHCHECK --interval=30s \
             --timeout=5s \
             --start-period=90s \
             --retries=5 \

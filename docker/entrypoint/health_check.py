@@ -1,7 +1,11 @@
 # healthcheck.py
 import json
+import os
 import sys
 import urllib.request
+
+os.environ['HTTP_PROXY']  = ""
+os.environ["HTTPS_PROXY"] = ""
 
 try:
     response = urllib.request.urlopen(
