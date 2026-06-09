@@ -26,3 +26,12 @@
     font-size: 1.2rem;
     min-width: 30px;
 }
+
+main {
+  margin-left: 200px;
+  transition: margin-left 0.3s;
+}
+
+.sidebar.collapsed ~ main {
+  margin-left: 74px;
+}
