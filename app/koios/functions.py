@@ -90,6 +90,8 @@ def get_logger():
             continue
         module_name = os.path.basename(path)
         app  = get_applet_app(module_name)
+        if not app:
+            continue
         return module_name, app.applet_meta.get("dependencies", {})
     return None, None
 
