@@ -32,3 +32,6 @@ class Command(BaseCommand):
 
         for template in TEMPLATE_DIR.glob("*.tpl"):
             write_template(template, name)
+
+        (app_dir / 'static' / app_dir).mkdir(parents=True)
+        (app_dir / 'templates' / app_dir).mkdir(parents=True)

@@ -4,4 +4,5 @@ from {name}      import views
 app_name = '{name}'
 
 urlpatterns = [
+#    path('index', views.index, name='index'),
 ]
