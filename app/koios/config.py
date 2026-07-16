@@ -72,9 +72,10 @@ class Config():
                 or d.startswith("wss://") or d.startswith("ws://")):
                 return d
             return "https://"+d
-        hosts = self._get_property(*_DEFAULTS['csrf_trusted'])+self.allowed_hosts
+        hosts = self._get_property(*_DEFAULTS['csrf_trusted'])
         if isinstance(hosts, str):
             hosts = hosts.split(',')
+        hosts+=self.allowed_hosts
         hosts = list(set([domain_to_url(h) for h in hosts]))
         return hosts
 
