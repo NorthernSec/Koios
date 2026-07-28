@@ -1,8 +1,13 @@
+from django.http             import HttpResponse
 from django.urls.conf        import re_path
-from tastypie.resources      import Resource, ModelResource
+from tastypie.resources      import ModelResource
+from tastypie.resources      import Resource as TPResource
 from tastypie.authentication import Authentication
 from tastypie.authentication import ApiKeyAuthentication, SessionAuthentication
 from tastypie.authorization  import Authorization, DjangoAuthorization
+from tastypie                import http
+from tastypie.exceptions     import ImmediateHttpResponse
+
 
 class Singleton(type):
   _instances = {}
@@ -68,13 +73,6 @@ class AuthenticatedModelResource(ModelResource):
         return super().authorized_read_detail(object_list, bundle)
 
 
-class AuthenticatedResource(Resource):
-    """Base for non-model Tastypie resources that still require authentication."""
-    class Meta:
-        authentication = ApiKeyOrSessionAuthentication()
-        authorization  = Authorization()
-        abstract       = True
-
 
 def endpoint(methods=None):
     methods = [m.lower() for m in (methods or ["get"])]
@@ -84,12 +82,15 @@ def endpoint(methods=None):
     return decorator
 
 
-class Resource(Resource):
+class Resource(TPResource):
     """Base for non-model Tastypie resources"""
     class Meta:
         authentication = Authentication()
         authorization  = Authorization()
         abstract = True
+
+    def authentication_required_for_request(self, request, **kwargs):
+        return not request.path.rstrip("/").endswith("/schema")
 
     def get_method_handlers(self):
         handlers = {}
@@ -107,10 +108,16 @@ class Resource(Resource):
         return handlers
 
     def _dispatch_to_endpoint_method(self, request, **kwargs):
+        if self.authentication_required_for_request(request, **kwargs):
+            auth_result = self.is_authenticated(request)
+            if isinstance(auth_result, HttpResponse):
+                raise ImmediateHttpResponse(response=auth_result)
+            self.throttle_check(request)
+
         method = request.method.lower()
         handlers = self.get_method_handlers()
         if method not in handlers:
-            raise ImmediateHttpResponse(HttpMethodNotAllowed())
+            raise ImmediateHttpResponse(response=http.HttpMethodNotAllowed())
         handler = getattr(self, handlers[method])
         bundle = self.build_bundle(request=request)
         return handler(bundle, **kwargs)
@@ -129,3 +136,11 @@ class Resource(Resource):
 
     def delete_list(self, request, **kwargs):
         return self._dispatch_to_endpoint_method(request, **kwargs)
+
+
+class AuthenticatedResource(Resource):
+    """Base for non-model Tastypie resources that still require authentication."""
+    class Meta:
+        authentication = ApiKeyOrSessionAuthentication()
+        authorization  = Authorization()
+        abstract       = True
