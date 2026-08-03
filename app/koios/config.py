@@ -60,7 +60,7 @@ class Config():
     def allowed_hosts(self):
         hosts = self._get_property(*_DEFAULTS['allowed_hosts'])
         if isinstance(hosts, str):
-            hosts = hosts.split(',')
+            hosts = [x.strip() for x in hosts.split(',')]
         if "localhost" not in hosts: # Necessry for health check
             hosts.append("localhost")
         return hosts
@@ -74,7 +74,7 @@ class Config():
             return "https://"+d
         hosts = self._get_property(*_DEFAULTS['csrf_trusted'])
         if isinstance(hosts, str):
-            hosts = hosts.split(',')
+            hosts = [x.strip() for x in hosts.split(',')]
         hosts+=self.allowed_hosts
         hosts = list(set([domain_to_url(h) for h in hosts]))
         return hosts
