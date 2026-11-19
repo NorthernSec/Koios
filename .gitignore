@@ -1,3 +1,15 @@
+# Ignore all custom apps from the apps folder, but keep tracking koios code
+/app/*
+!/app/koios
+!/app/koios_admin
+!/app/static_files
+!/app/templates
+!/app/manage.py
+!/app/requirements.txt
+
+# Ignore local files
+.env
+data/
+
+# Ignore interpreter files
 __pycache__/
-app/static/
-app/logs/
